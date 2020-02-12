@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cassert>
+#include <sys/mman.h>
 
 void mm_t::write(uint64_t addr, uint8_t *data, uint64_t strb, uint64_t size)
 {
@@ -33,13 +34,14 @@ void mm_t::init(size_t sz, int wsz, int lsz)
   assert(wsz > 0 && lsz > 0 && (lsz & (lsz-1)) == 0 && lsz % wsz == 0);
   word_size = wsz;
   line_size = lsz;
-  data = new uint8_t[sz];
+  data = (uint8_t *) mmap(
+          NULL, sz, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
   size = sz;
 }
 
 mm_t::~mm_t()
 {
-  delete [] data;
+  munmap(data, this->size);
 }
 
 void mm_magic_t::init(size_t sz, int wsz, int lsz)
